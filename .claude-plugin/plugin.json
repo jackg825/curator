@@ -1,14 +1,16 @@
 {
   "name": "curator",
-  "version": "0.1.0",
-  "description": "Claude Code memory layer backed by MemPalace with pattern learning and CQRS projection",
+  "version": "1.2.0",
+  "description": "Claude Code lightweight pattern proposal UX + 7-day rolling pattern-signal log. Optionally shells out to mempalace CLI for semantic recall.",
   "author": { "name": "Jack Chung" },
   "repository": "https://github.com/jackg825/curator",
   "license": "MIT",
   "requires": {
-    "mcp_servers": ["mempalace"],
     "binaries": ["jq", "yq"]
   },
+  "optional": {
+    "binaries": ["mempalace"]
+  },
   "postInstall": "core/scripts/install.sh",
-  "keywords": ["memory", "mempalace", "cqrs", "pattern-learning", "claude-code"]
+  "keywords": ["memory", "pattern-learning", "claude-code", "ux"]
 }

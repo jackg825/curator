@@ -1,27 +1,13 @@
 #!/usr/bin/env bats
+# v1.2: Stop hook prunes pattern-signal.md only. Reconcile path deleted.
 
 setup() {
   REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   export CURATOR_HOME="$REPO_ROOT"
   export CURATOR_STATE="$BATS_TEST_TMPDIR/.curator"
   export CLAUDE_PROJECT_ROOT="$BATS_TEST_TMPDIR/project"
-  export CURATOR_MEMPALACE_URL="mock://$REPO_ROOT/test/fixtures/mock-mempalace.sh"
-  export MOCK_MCP_LOG="$BATS_TEST_TMPDIR/mcp.log"
-  export MOCK_MCP_MODE=ok
   mkdir -p "$CLAUDE_PROJECT_ROOT/memory" "$CURATOR_STATE"
-  : > "$MOCK_MCP_LOG"
   echo "mac-test" > "$CURATOR_STATE/device-id"
-}
-
-@test "stop flushes pending_sync via reconcile" {
-  source "$REPO_ROOT/core/lib/common.sh"
-  source "$REPO_ROOT/core/lib/journal.sh"
-  journal_append "feedback" '{"text":"flush me"}'
-  "$REPO_ROOT/core/hooks/stop.sh"
-  local pending
-  pending=$(jq -s 'map(select(.pending | length > 0)) | length' \
-    "$CURATOR_STATE/pending_sync.jsonl")
-  [ "$pending" = "0" ]
 }
 
 @test "stop prunes pattern-signal entries older than 7 days" {
@@ -31,7 +17,6 @@ setup() {
 - 2020-01-01T00:00:00Z | ancient pattern | device=old
 - __RECENT__ | fresh pattern | device=new
 EOF
-  # Replace __RECENT__ with a recent timestamp
   local now
   now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   sed -i.bak "s|__RECENT__|$now|" "$ps" && rm "$ps.bak"
@@ -57,4 +42,13 @@ EOF
 @test "stop exits 0 when no pattern-signal exists yet" {
   run "$REPO_ROOT/core/hooks/stop.sh"
   [ "$status" -eq 0 ]
+}
+
+@test "stop is fast (under 5 seconds without pattern-signal)" {
+  local start
+  start=$(date +%s)
+  "$REPO_ROOT/core/hooks/stop.sh"
+  local end
+  end=$(date +%s)
+  [ "$((end - start))" -lt 5 ]
 }

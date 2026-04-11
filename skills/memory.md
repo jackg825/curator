@@ -1,29 +1,24 @@
 ---
 name: memory
-description: Show curator status (MEMORY.md, pattern-signal, MemPalace connection, pending proposals). Use when user runs "/curator:memory" or asks "what does curator remember?".
+description: Show curator status (pattern-signal entries, mempalace availability, pending proposals). Use when the user runs "/curator:memory" or asks "what does curator remember?".
 allowed-tools: Bash
 ---
 
 # /curator:memory
 
-Displays curator's current state: the L0 MEMORY.md summary, pattern-signal status, MemPalace connection tier, and any pending pattern proposals awaiting review.
+Displays curator's current state: the local pattern-signal log, the MemPalace CLI availability, and any pending pattern proposals awaiting review.
 
 **Usage:**
 - `/curator:memory` — status overview
-- `/curator:memory --review` — batch-review deferred pattern proposals
-- `/curator:memory --edit` — open MEMORY.md in $EDITOR
+- `/curator:memory --review` — list deferred pattern proposals
 
 ## Implementation
 
 ```bash
 source "$CURATOR_HOME/core/lib/common.sh"
-source "$CURATOR_HOME/core/lib/mcp-client.sh"
+source "$CURATOR_HOME/core/lib/mempalace-cli.sh"
 
 case "${1:-}" in
-  --edit)
-    "${EDITOR:-vi}" "$CLAUDE_PROJECT_ROOT/memory/MEMORY.md"
-    exit 0
-    ;;
   --review)
     pp="$CURATOR_STATE/pending-proposals.jsonl"
     if [ ! -s "$pp" ]; then
@@ -32,47 +27,30 @@ case "${1:-}" in
     fi
     count=$(wc -l < "$pp")
     echo "[curator] $count pending proposal(s):"
-    cat -n "$pp" | jq -r '[.[0], (.[1:] | join(" "))] | @tsv' 2>/dev/null || cat -n "$pp"
-    echo
-    echo "To confirm: /curator:capture <text>"
-    echo "To clear all: rm $pp"
+    cat -n "$pp"
     exit 0
     ;;
 esac
 
-# Default: status overview (HR-3 format)
-mem="$CLAUDE_PROJECT_ROOT/memory/MEMORY.md"
+# Status overview
 ps="$CLAUDE_PROJECT_ROOT/memory/pattern-signal.md"
-
-if [ -f "$mem" ]; then
-  l0_entries=$(grep -c "^- " "$mem" 2>/dev/null || echo 0)
-  l0_bytes=$(wc -c < "$mem")
-  l0_human=$(awk -v b="$l0_bytes" 'BEGIN{printf "%.1fKB", b/1024}')
-  echo "[MEMORY.md]     L0 · $l0_entries entries · $l0_human · schema v1"
-else
-  echo "[MEMORY.md]     (not yet initialized)"
-fi
 
 if [ -f "$ps" ]; then
   ps_entries=$(grep -c "^- " "$ps" 2>/dev/null || echo 0)
   ps_mtime=$(stat -f "%Sm" -t "%Y-%m-%dT%H:%M:%SZ" "$ps" 2>/dev/null || \
              stat -c "%y" "$ps" | cut -d'.' -f1)
-  echo "[pattern-signal] $ps_entries observations · last write $ps_mtime"
+  echo "[pattern-signal]   $ps_entries observations · last write $ps_mtime · 7d rolling"
 else
-  echo "[pattern-signal] (empty)"
+  echo "[pattern-signal]   (empty)"
 fi
 
-if mcp_ping 2>/dev/null; then
-  pending_count=0
-  if [ -f "$CURATOR_STATE/pending_sync.jsonl" ]; then
-    pending_count=$(jq -s 'map(select(.pending | length > 0)) | length' \
-      "$CURATOR_STATE/pending_sync.jsonl" 2>/dev/null || echo 0)
-  fi
-  echo "[MemPalace]     connected · $pending_count pending write(s)"
+if mempalace_available; then
+  ver=$(mempalace_version 2>/dev/null || echo "unknown")
+  cmd=$(mempalace_resolved_command)
+  echo "[MemPalace CLI]    available (v$ver, $cmd)"
 else
-  banner=$(head -n 1 "$mem" 2>/dev/null || echo "")
-  proj_ts=$(echo "$banner" | sed -n 's/.*projection-ts=\([^ ]*\).*/\1/p')
-  echo "[MemPalace]     disconnected · last sync $proj_ts"
+  echo "[MemPalace CLI]    not installed — /curator:recall will fall back to local grep"
+  echo "                   install: see https://github.com/milla-jovovich/mempalace"
 fi
 
 pp="$CURATOR_STATE/pending-proposals.jsonl"

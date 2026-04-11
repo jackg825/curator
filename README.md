@@ -1,32 +1,55 @@
 # Curator
 
-A Claude Code plugin for persistent, searchable memory backed by [MemPalace](https://github.com/milla-jovovich/mempalace).
+A small Claude Code plugin that adds two things on top of native CC behavior:
 
-## What it does
+1. **Y/n/d pattern proposal** — when curator detects a candidate pattern in the current session, the next `UserPromptSubmit` hook surfaces it once and asks the user to confirm, skip, or defer. One proposal per session, hard-capped (HR-2).
+2. **Local 7-day pattern-signal log** — `/curator:capture <text>` appends an observation to `<repo>/memory/pattern-signal.md`; the Stop hook prunes entries older than 7 days. CC's native Sonnet selector picks the file up on demand via mtime ordering.
 
-Curator adds four slash commands (`/curator:capture`, `/curator:recall`, `/curator:memory`, `/curator:build`) and three lifecycle hooks (`SessionStart`, `UserPromptSubmit`, `Stop`) on top of Claude Code. At session start it projects L0 absolute rules from MemPalace into the CC native memdir. During sessions, it captures new memories with content-hash idempotency. On session end, it flushes pending writes and maintains a 7-day rolling pattern-signal file that CC's native Sonnet selector picks up on demand.
+That's it. Curator does **not** own persistent storage, MCP integration, or cross-session semantic memory.
 
-## Why
+## What changed in v1.2
 
-Claude Code has no cross-session semantic memory. `/memory` and memdir are per-session static files; `teamMemorySync` only works with first-party OAuth and doesn't do vector search. Curator fills the gap by wiring MemPalace (ChromaDB semantic memory with 96.6% LongMemEval R@5) into the CC lifecycle without replacing any native functionality.
+v1.0 shipped with a write-through MCP architecture targeting MemPalace. After verification ([issue #1](https://github.com/jackg825/curator/issues/1)) we discovered the spec assumed a `claude mcp call` CLI that does not exist, AND that MemPalace has no concept of "absolute rules" that could be projected reliably.
+
+v1.2 drops the entire MCP integration and the L0 projection. What remains is the part that always worked locally: the Y/n/d UX and the pattern-signal log. For real persistent semantic memory, **install [MemPalace](https://github.com/milla-jovovich/mempalace) directly** — its own native Claude Code plugin handles auto-save Stop hooks. Curator complements it; it doesn't replace it.
+
+`/curator:recall <query>` shells out to the `mempalace search` CLI when available, and falls back to `grep` over the local pattern-signal otherwise.
 
 ## Install
 
 See [`docs/quickstart.md`](docs/quickstart.md).
 
-## Design
+## Commands
 
-The full design is in [`docs/superpowers/specs/2026-04-11-curator-design.md`](docs/superpowers/specs/2026-04-11-curator-design.md). It was produced through a 3-round 5-expert debate with Devil's Advocate, with 16 Claude Code source-code citations grounding every capability claim.
+| Command | Behavior |
+|---|---|
+| `/curator:capture <text>` | Append to `pattern-signal.md` (local 7d rolling) |
+| `/curator:recall <query>` | `mempalace search` if available, else `grep` over `pattern-signal.md` |
+| `/curator:memory` | Status: pattern-signal entries, mempalace CLI availability, pending proposals |
+| `/curator:memory --review` | List deferred pattern proposals |
+| `/curator:build` | v1 stub, reserved for v1.2.x |
+
+## Hooks
+
+| Hook | Behavior |
+|---|---|
+| `SessionStart` | Reset per-session state (`session-state.json`, proposal count) |
+| `UserPromptSubmit` | Emit one Y/n/d pattern proposal per session if a candidate exists |
+| `Stop` | Prune `pattern-signal.md` to last 7 days |
 
 ## Status
 
-**v1.0 — alpha. Real MCP integration is deferred to v1.1.**
+**v1.2.0 — production-ready for the limited scope above.**
 
-Curator v1 is structurally complete (24 implementation tasks, 67 unit tests, end-to-end roundtrip + HR acceptance pass), but the `mcp-client.sh` stdio transport assumes a `claude mcp call` CLI that does not exist. As a result, anything that needs to talk to a real MemPalace instance (write-through capture, semantic recall, SessionStart L0 projection) currently no-ops or falls back to local-only behavior. The Y/n/d pattern proposal pipeline, journal, install/uninstall, and `/curator:memory` status command all work without MCP and are usable today.
+- 47 bats unit tests + roundtrip integration + HR-1/HR-2/HR-3 acceptance: all green
+- No external runtime dependencies (mempalace is optional)
+- Idempotent install / uninstall via jq-patched `settings.json`
 
-See **[issue #1](https://github.com/jackg825/curator/issues/1)** for the F6 follow-up evidence and the three proposed fix paths for v1.1.
+## Design history
 
-`build-loop` workflow (`/curator:build`) is a stub (v1.2). 主動警告, dashboard, and multi-user team mode are deferred (v2.x). Multi-device Mac Mini runtime is phase 2.
+- v1.0 → v1.2 evolution and the F6 deep-dive: [issue #1](https://github.com/jackg825/curator/issues/1)
+- Original spec (now historical): [`docs/superpowers/specs/2026-04-11-curator-design.md`](docs/superpowers/specs/2026-04-11-curator-design.md)
+- Original implementation plan: [`docs/superpowers/plans/2026-04-11-curator-plan.md`](docs/superpowers/plans/2026-04-11-curator-plan.md)
 
 ## License
 

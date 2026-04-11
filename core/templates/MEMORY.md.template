@@ -1,0 +1,13 @@
+<!-- curator: projection-ts=__PROJECTION_TS__ source=fresh schema_version=1 -->
+# __PROJECT_NAME__ — L0 Memory
+
+> **Absolute rules only.** L0 is what must never be violated. Historical context and patterns live in the memdir and are loaded on-demand by Claude Code.
+
+## Project identity
+
+- Project: __PROJECT_NAME__
+- Canonical store: MemPalace (wing: __WING_NAME__)
+
+## Absolute rules
+
+(Populated by first `/curator:capture --pin <rule>` or by user-edited additions.)

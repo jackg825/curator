@@ -1,0 +1,10 @@
+# Curator dev artifacts
+*.bak
+*.tmp
+.DS_Store
+test/tmp/
+test/.bats-tmp/
+
+# Never commit local state
+.curator/
+~/.curator/

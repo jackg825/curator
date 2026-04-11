@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# v1.2: SessionStart only resets per-session state. L0 projection deleted.
 
 setup() {
   REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
@@ -6,11 +7,7 @@ setup() {
   export CURATOR_STATE="$BATS_TEST_TMPDIR/.curator"
   export CLAUDE_PROJECT_ROOT="$BATS_TEST_TMPDIR/project"
   export CLAUDE_SESSION_ID="test-sess-1"
-  export CURATOR_MEMPALACE_URL="mock://$REPO_ROOT/test/fixtures/mock-mempalace.sh"
-  export MOCK_MCP_LOG="$BATS_TEST_TMPDIR/mcp.log"
-  export MOCK_MCP_MODE=ok
   mkdir -p "$CLAUDE_PROJECT_ROOT/memory" "$CURATOR_STATE"
-  : > "$MOCK_MCP_LOG"
   echo "mac-test" > "$CURATOR_STATE/device-id"
 }
 
@@ -28,28 +25,22 @@ setup() {
   [ "$sid" = "test-sess-1" ]
 }
 
-@test "session-start creates MEMORY.md via project.sh" {
+@test "session-start records started_at timestamp" {
   "$REPO_ROOT/core/hooks/session-start.sh"
-  [ -f "$CLAUDE_PROJECT_ROOT/memory/MEMORY.md" ]
+  local ts
+  ts=$(jq -r .started_at "$CURATOR_STATE/session-state.json")
+  [[ "$ts" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$ ]]
 }
 
-@test "session-start invokes reconcile when pending_sync has entries" {
-  source "$REPO_ROOT/core/lib/common.sh"
-  source "$REPO_ROOT/core/lib/journal.sh"
-  journal_append "feedback" '{"text":"pre-existing pending"}'
-  "$REPO_ROOT/core/hooks/session-start.sh"
-  local pending
-  pending=$(jq -s 'map(select(.pending | length > 0)) | length' \
-    "$CURATOR_STATE/pending_sync.jsonl")
-  [ "$pending" = "0" ]
-}
-
-@test "session-start exits 0 even when MemPalace unreachable" {
-  export MOCK_MCP_MODE=fail
+@test "session-start exits 0 unconditionally" {
   run "$REPO_ROOT/core/hooks/session-start.sh"
   [ "$status" -eq 0 ]
-  # MEMORY.md still written with stale banner
-  grep -q "source=stale" "$CLAUDE_PROJECT_ROOT/memory/MEMORY.md"
+}
+
+@test "session-start does NOT touch MEMORY.md (v1.2: no projection)" {
+  rm -f "$CLAUDE_PROJECT_ROOT/memory/MEMORY.md"
+  "$REPO_ROOT/core/hooks/session-start.sh"
+  [ ! -e "$CLAUDE_PROJECT_ROOT/memory/MEMORY.md" ]
 }
 
 @test "session-start is fast enough (under 15 seconds)" {

@@ -1,24 +1,21 @@
 #!/usr/bin/env bash
 # core/hooks/stop.sh — CC Stop hook entry point.
-# 10min timeout. Flushes pending_sync and maintains pattern-signal 7d window.
+# 10min timeout. Maintains the pattern-signal.md 7-day rolling window.
+#
+# v1.2 scope: pattern-signal pruning ONLY. The pending_sync flush via
+# reconcile.sh was deleted because curator no longer writes to MemPalace
+# (mempalace's own plugin handles auto-save; see issue #1).
 
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 : "${CURATOR_HOME:=$(cd "$SCRIPT_DIR/../.." && pwd)}"
 source "$CURATOR_HOME/core/lib/common.sh"
-source "$CURATOR_HOME/core/lib/journal.sh"
 set +e  # restore: hook must never block session
 
-: "${CURATOR_STATE:=$HOME/.curator}"
 : "${CLAUDE_PROJECT_ROOT:=$PWD}"
 
-# 1. Flush pending_sync (same path as reconcile)
-if ! "$CURATOR_HOME/memory-bridge/reconcile.sh"; then
-  curator_log WARN "reconcile during stop failed"
-fi
-
-# 2. Prune pattern-signal.md to last 7 days
+# Prune pattern-signal.md to last 7 days
 ps="$CLAUDE_PROJECT_ROOT/memory/pattern-signal.md"
 if [ -f "$ps" ]; then
   cutoff=$(date -u -v-7d +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || \

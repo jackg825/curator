@@ -85,14 +85,13 @@ jq -f "$CURATOR_HOME/core/templates/settings.json.patch.jq" \
 mv "$tmp_settings" "$settings"
 curator_log INFO "patched $settings"
 
-# --- 6. Register MCP server (if not skipping) ---
+# --- 6. Check optional MemPalace CLI dependency ---
 if [ "$SKIP_MCP" = "0" ]; then
-  if command -v claude >/dev/null 2>&1; then
-    if claude mcp list 2>/dev/null | grep -q '^mempalace'; then
-      curator_log INFO "mempalace MCP already registered"
-    else
-      curator_log WARN "mempalace MCP not registered — register manually: claude mcp add mempalace -- mempalace serve --stdio"
-    fi
+  source "$CURATOR_HOME/core/lib/mempalace-cli.sh"
+  if mempalace_available; then
+    curator_log INFO "mempalace CLI detected — /curator:recall will use semantic search"
+  else
+    curator_log INFO "mempalace CLI not installed — /curator:recall will fall back to local grep (install hint: see https://github.com/milla-jovovich/mempalace)"
   fi
 fi
 
@@ -100,7 +99,7 @@ fi
 receipt="$CURATOR_STATE/install-receipt.json"
 hook_snapshot=$(jq -c '.hooks' "$settings")
 jq -cn \
-  --arg version "0.1.0" \
+  --arg version "1.2.0" \
   --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   --arg device "$device_id" \
   --argjson hooks "$hook_snapshot" \

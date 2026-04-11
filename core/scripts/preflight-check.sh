@@ -88,13 +88,15 @@ else
 fi
 say ""
 
-# --- 5. MemPalace MCP server ---
-say "## MemPalace MCP"
-if command -v claude >/dev/null 2>&1 && claude mcp list 2>/dev/null | grep -q '^mempalace'; then
-  say "  [OK] mempalace MCP server registered"
+# --- 5. MemPalace CLI (optional dependency in v1.2) ---
+say "## MemPalace CLI"
+source "$SCRIPT_DIR/../lib/mempalace-cli.sh"
+if mempalace_available; then
+  say "  [OK] mempalace CLI available — /curator:recall will use semantic search"
 else
-  say "  [BLOCKER] MemPalace MCP not registered — install and run: claude mcp add mempalace -- mempalace serve --stdio"
-  blockers=$((blockers + 1))
+  say "  [INFO] mempalace CLI not found — /curator:recall will fall back to local pattern-signal grep"
+  say "         install hint: see https://github.com/milla-jovovich/mempalace"
+  warnings=$((warnings + 1))
 fi
 say ""
 

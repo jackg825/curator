@@ -20,7 +20,13 @@ The full design is in [`docs/superpowers/specs/2026-04-11-curator-design.md`](do
 
 ## Status
 
-v1 — memory layer + pattern extraction. `build-loop` workflow is a stub (v1.2). 主動警告, dashboard, and multi-user team mode are deferred (v2.x). Multi-device Mac Mini runtime is phase 2.
+**v1.0 — alpha. Real MCP integration is deferred to v1.1.**
+
+Curator v1 is structurally complete (24 implementation tasks, 67 unit tests, end-to-end roundtrip + HR acceptance pass), but the `mcp-client.sh` stdio transport assumes a `claude mcp call` CLI that does not exist. As a result, anything that needs to talk to a real MemPalace instance (write-through capture, semantic recall, SessionStart L0 projection) currently no-ops or falls back to local-only behavior. The Y/n/d pattern proposal pipeline, journal, install/uninstall, and `/curator:memory` status command all work without MCP and are usable today.
+
+See **[issue #1](https://github.com/jackg825/curator/issues/1)** for the F6 follow-up evidence and the three proposed fix paths for v1.1.
+
+`build-loop` workflow (`/curator:build`) is a stub (v1.2). 主動警告, dashboard, and multi-user team mode are deferred (v2.x). Multi-device Mac Mini runtime is phase 2.
 
 ## License
 

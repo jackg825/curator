@@ -1,0 +1,14 @@
+{
+  "name": "curator",
+  "version": "0.1.0",
+  "description": "Claude Code memory layer backed by MemPalace with pattern learning and CQRS projection",
+  "author": { "name": "Jack Chung" },
+  "repository": "https://github.com/jackg825/curator",
+  "license": "MIT",
+  "requires": {
+    "mcp_servers": ["mempalace"],
+    "binaries": ["jq", "yq"]
+  },
+  "postInstall": "core/scripts/install.sh",
+  "keywords": ["memory", "mempalace", "cqrs", "pattern-learning", "claude-code"]
+}

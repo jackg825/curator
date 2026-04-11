@@ -88,3 +88,34 @@ EOF
   count2=$(jq '.hooks.Stop | length' "$CLAUDE_HOME/settings.json")
   [ "$count1" = "$count2" ]
 }
+
+@test "uninstall removes curator hooks but leaves existing" {
+  "$REPO_ROOT/core/scripts/install.sh" --skip-preflight --skip-mcp
+  "$REPO_ROOT/core/scripts/uninstall.sh" --keep-state
+  # Curator hooks should be gone
+  jq -e '.hooks.Stop | map(.hooks[0].command) | any(contains("curator") or contains("stop.sh")) | not' \
+    "$CLAUDE_HOME/settings.json" > /dev/null
+  # Existing hook must still be there
+  jq -e '.hooks.Stop | map(.hooks[0].command) | any(. == "existing-stop-hook.sh")' \
+    "$CLAUDE_HOME/settings.json" > /dev/null
+}
+
+@test "uninstall removes skill symlinks" {
+  "$REPO_ROOT/core/scripts/install.sh" --skip-preflight --skip-mcp
+  "$REPO_ROOT/core/scripts/uninstall.sh" --keep-state
+  [ ! -L "$CLAUDE_HOME/skills/curator-capture.md" ]
+  [ ! -L "$CLAUDE_HOME/skills/curator-recall.md" ]
+}
+
+@test "uninstall --keep-state preserves ~/.curator" {
+  "$REPO_ROOT/core/scripts/install.sh" --skip-preflight --skip-mcp
+  echo "sentinel" > "$CURATOR_STATE/sentinel.txt"
+  "$REPO_ROOT/core/scripts/uninstall.sh" --keep-state
+  [ -f "$CURATOR_STATE/sentinel.txt" ]
+}
+
+@test "uninstall --purge removes ~/.curator" {
+  "$REPO_ROOT/core/scripts/install.sh" --skip-preflight --skip-mcp
+  "$REPO_ROOT/core/scripts/uninstall.sh" --purge
+  [ ! -d "$CURATOR_STATE" ]
+}

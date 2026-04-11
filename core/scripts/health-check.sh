@@ -22,6 +22,15 @@ mcp_status() {
   fi
 }
 
+mcp_transport() {
+  case "${CURATOR_MEMPALACE_URL:-stdio}" in
+    stdio)            echo "unimplemented" ;;
+    mock://*)         echo "mock" ;;
+    http://*|https://*) echo "http" ;;
+    *)                echo "unknown" ;;
+  esac
+}
+
 state_status() {
   [ -d "$CURATOR_STATE" ] && echo "present" || echo "absent"
 }
@@ -42,6 +51,8 @@ main() {
   shasum_status="$(bin_status shasum)"
   local mcp
   mcp="$(mcp_status)"
+  local transport
+  transport="$(mcp_transport)"
   local state
   state="$(state_status)"
   local ver
@@ -52,11 +63,13 @@ main() {
     --arg yq_s "$yq_status" \
     --arg sha_s "$shasum_status" \
     --arg mcp_s "$mcp" \
+    --arg transport_s "$transport" \
     --arg state_s "$state" \
     --arg ver "$ver" \
     '{
       binaries: {jq:$jq_s, yq:$yq_s, shasum:$sha_s},
       mempalace: $mcp_s,
+      mcp_transport: $transport_s,
       state: $state_s,
       version: $ver
     }'

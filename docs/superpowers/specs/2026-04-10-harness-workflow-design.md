@@ -1,7 +1,17 @@
-# Harness Engineering Workflow Design
+# Harness Engineering Workflow Design (RETRACTED)
+
+> **⚠️ SUPERSEDED 2026-04-11** — This draft was retracted after Claude Code source-code exploration revealed several false premises. See the replacement: [`2026-04-11-curator-design.md`](./2026-04-11-curator-design.md).
+>
+> **Why retracted**: This draft claimed Claude Code has "only 4 hook event types, synchronous, blocking" and proposed a custom JSONL event queue. Source code (`entrypoints/sdk/coreTypes.ts:25-53`) shows 26 user-space hook events, `AsyncHookRegistry` with `asyncRewake:true`, and `utils/hooks/hookEvents.ts` as an internal event bus. The entire Decision A (event architecture) rested on this false premise.
+>
+> **What changed**: The project was renamed from `harness` to `curator`. The new design uses Claude Code native hooks instead of a custom event bus, adopts dual-layer CQRS with MemPalace as canonical store and `memdir/` as projection cache, and adds a 3-round expert debate record with source-code citations.
+>
+> This document is kept in git history as a record of the design evolution. Do NOT use it as the current design.
+
+---
 
 **Date:** 2026-04-10
-**Status:** Approved
+**Status:** ~~Approved~~ **Retracted 2026-04-11**
 **Authors:** Jack Chung + 6-expert panel debate
 
 ## Overview

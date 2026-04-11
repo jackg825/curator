@@ -1,8 +1,16 @@
-# Harness Engineering Workflow — Implementation Plan
+# Harness Engineering Workflow — Implementation Plan (RETRACTED)
+
+> **⚠️ SUPERSEDED 2026-04-11** — This plan implemented the retracted `2026-04-10-harness-workflow-design.md` spec. The underlying spec was withdrawn after Claude Code source-code exploration invalidated several of its premises, and the project was renamed from `harness` to `curator`.
+>
+> A new plan will be written against [`docs/superpowers/specs/2026-04-11-curator-design.md`](../specs/2026-04-11-curator-design.md). Do NOT execute the tasks below — they are based on the outdated event-bus and dual-track-events design that the new spec abandons in favor of Claude Code native hooks and a dual-file projection.
+>
+> This document is retained in git history as a record of the design evolution.
+
+---
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a portable Claude Code harness monorepo with JSONL event queue, CQRS memory bridge, and build-loop workflow integration.
+**Goal:** ~~Build a portable Claude Code harness monorepo with JSONL event queue, CQRS memory bridge, and build-loop workflow integration.~~ **(RETRACTED — see banner above)**
 
 **Architecture:** Layer Cake (L0 Core → L1 Memory Bridge → L2 Workflows). Hooks are thin triggers writing to JSONL. Native memory is write model; MemPalace is audit log + semantic read model. All routing is deterministic shell logic.
 

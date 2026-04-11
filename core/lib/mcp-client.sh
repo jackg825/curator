@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # core/lib/mcp-client.sh — MemPalace MCP call wrapper.
 # Supported URL schemes:
-#   stdio                  → spawn via `claude mcp call mempalace`
+#   stdio                  → NOT IMPLEMENTED in v1; loud failure (see issue #1)
 #   mock://<path>          → pipe into a local script (tests only)
 #   http://host:port       → POST via curl
 # Requires common.sh sourced first.
@@ -16,13 +16,11 @@ _mcp_dispatch() {
   local url="$CURATOR_MEMPALACE_URL"
   case "$url" in
     stdio)
-      # Real CC-managed MCP call
-      if command -v claude >/dev/null 2>&1; then
-        claude mcp call mempalace --timeout "$CURATOR_MCP_TIMEOUT"
-      else
-        curator_log ERROR "claude CLI not found; cannot dispatch stdio MCP call"
-        return 1
-      fi
+      # v1.0 placeholder assumed `claude mcp call`, which does not exist in
+      # the Claude Code CLI. Real stdio integration requires speaking JSON-RPC
+      # to a mempalace.mcp_server subprocess directly. Deferred to v1.2+.
+      curator_log ERROR "stdio MCP transport is not implemented in curator v1; see https://github.com/jackg825/curator/issues/1"
+      return 1
       ;;
     mock://*)
       local script="${url#mock://}"

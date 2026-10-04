@@ -1,27 +1,17 @@
 ---
 name: build
-description: (v1 stub) build-loop 4-phase workflow placeholder. Will be implemented in v1.2.
+description: Explain the unimplemented /curator:build placeholder only when explicitly invoked or asked about; do not use it for ordinary coding, planning, or status tasks.
 allowed-tools: Bash
 ---
 
-# /curator:build (v1 stub)
+# /curator:build
 
-The build-loop workflow is reserved for v1.2. In v1 this command exists only to reserve the name and explain the plan.
+This command is an informational stub. It does not implement a build loop or orchestrate engineering work. Do not promise a release date or impose the historical four-phase plan on the current task.
 
-## Implementation
+When explicitly invoked, explain that limitation and point to the implemented commands:
 
-```bash
-cat <<'EOF'
-[curator] /curator:build is a v1 stub.
+- `/curator:capture <text>` records a local observation that expires after seven days.
+- `/curator:recall <query>` searches MemPalace when available, otherwise the local pattern-signal log.
+- `/curator:memory` reports local state; `--review` lists deferred proposals.
 
-The build-loop (4-phase workflow: PLAN → IMPLEMENT → SIMPLIFY → REVIEW) is
-deferred to curator v1.2. The v1 release focuses on memory + pattern learning.
-
-For now, use these commands:
-  /curator:capture <text>   — record a decision or rule
-  /curator:recall <query>   — find past decisions
-  /curator:memory           — show current state
-
-See docs/superpowers/specs/2026-04-11-curator-design.md § Future Work for details.
-EOF
-```
+Completion is a brief, accurate explanation; no files, project settings, or workflows need to be changed. Read `$CURATOR_HOME/docs/superpowers/specs/2026-04-11-curator-design.md` from the plugin source root (not the current project) only when the user asks about the historical build-loop proposal, and label it as unimplemented design history.

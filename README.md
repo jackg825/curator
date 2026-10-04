@@ -27,7 +27,7 @@ See [`docs/quickstart.md`](docs/quickstart.md).
 | `/curator:recall <query>` | `mempalace search` if available, else `grep` over `pattern-signal.md` |
 | `/curator:memory` | Status: pattern-signal entries, mempalace CLI availability, pending proposals |
 | `/curator:memory --review` | List deferred pattern proposals |
-| `/curator:build` | v1 stub, reserved for v1.2.x |
+| `/curator:build` | Informational stub; no build loop is implemented |
 
 ## Hooks
 
@@ -41,7 +41,7 @@ See [`docs/quickstart.md`](docs/quickstart.md).
 
 **v1.2.0 — production-ready for the limited scope above.**
 
-- 47 bats unit tests + roundtrip integration + HR-1/HR-2/HR-3 acceptance: all green
+- 48 bats unit tests + roundtrip integration + HR-1/HR-2/HR-3 acceptance
 - No external runtime dependencies (mempalace is optional)
 - Idempotent install / uninstall via jq-patched `settings.json`
 

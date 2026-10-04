@@ -43,8 +43,20 @@ setup() {
   run curator_device_id
   [ "$status" -eq 0 ]
   [ -f "$CURATOR_STATE/device-id" ]
-  # Format: hostname-4chars
-  [[ "$output" =~ ^[a-zA-Z0-9]+-[a-z0-9]{4}$ ]]
+  # Format: normalized hostname (which may contain hyphens) + 4-char suffix.
+  [[ "$output" =~ ^[a-z0-9][a-z0-9-]*-[a-z0-9]{4}$ ]]
+  [ "$(cat "$CURATOR_STATE/device-id")" = "$output" ]
+}
+
+@test "curator_device_id normalizes hostname and preserves its hyphens" {
+  hostname() {
+    [ "$1" = "-s" ] || return 1
+    printf '%s\n' 'Dev-Mac_16.local'
+  }
+  run curator_device_id
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ ^dev-mac-16-local-[a-z0-9]{4}$ ]]
+  [ "$(cat "$CURATOR_STATE/device-id")" = "$output" ]
 }
 
 @test "curator_device_id is stable across calls" {
